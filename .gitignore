@@ -1,7 +1,8 @@
 .DS_Store
+*.swp
 *.pub
 *.csr
 *.cer
 *.pem
 *.p12
-.pfx
+*.pfx

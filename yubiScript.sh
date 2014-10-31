@@ -1,6 +1,6 @@
 #!/bin/bash
+
 # TODO:		Output all user settings to a file
-# TODO:		Better notifications of what is happening
 
 
 ##################################################################################################
@@ -9,11 +9,13 @@
 PIN=123456
 PUK=12345678
 MGMT_KEY=010203040506070801020304050607080102030405060708
+USER_NAME="Test User"
+USER_ORG="My Organization"
 
 
 
 ##################################################################################################
-# 1)	Add the yubico-piv-tool binary to your path
+# Add the yubico-piv-tool binary to your path
 ##################################################################################################
 YUBI_BIN=$PWD/bin/
 export PATH=$PATH:${YUBI_BIN}
@@ -21,7 +23,7 @@ export PATH=$PATH:${YUBI_BIN}
 
 
 ##################################################################################################
-# 2)	Check for the required binaries
+# Check for the required binaries
 ##################################################################################################
 hash dd 2>/dev/null || { echo >&2 "I require dd but it's not installed.  Aborting."; exit 1; }
 hash openssl 2>/dev/null || { echo >&2 "I require openssl but it's not installed.  Aborting."; exit 1; }
@@ -30,7 +32,7 @@ hash yubico-piv-tool 2>/dev/null || { echo >&2 "I require yubico-piv-tool but it
 
 
 ##################################################################################################
-# 3)	Change the Yubikey Management Key
+# Change the Yubikey Management Key
 ##################################################################################################
 CHANGE_MGMT_KEY="no"
 echo -n "Do you want to change your token management key? yes/no (no): "
@@ -45,13 +47,15 @@ fi
 
 
 ##################################################################################################
-# 4)	Change the token PIN and PUK
+# Change the token PIN and PUK
 #	TODO:  What if the initial PIN/PUK are different?
 #	TODO:  What if they are locked out?
+#	TODO:  Confirmation of PIN/PUK values
 ##################################################################################################
 CHANGE_PIN="no"
 echo -n "Do you want to change your token PIN? yes/no (no): "
-read CHANGE_PIN
+read -s CHANGE_PIN
+echo ""
 if [ "$CHANGE_PIN" == "yes" ] ; then 
 	NEW_PIN=0
 	while [ ${#NEW_PIN} -ne 6 ] ; do
@@ -65,7 +69,8 @@ fi
 
 CHANGE_PUK="no"
 echo -n "Do you want to change your token PUK? yes/no (no): "
-read CHANGE_PUK
+read -s CHANGE_PUK
+echo ""
 if [ "$CHANGE_PUK" == "yes" ] ; then 
 	NEW_PUK=0
 	while [ ${#NEW_PUK} -ne 8 ] ; do
@@ -83,34 +88,50 @@ fi
 
 
 ##################################################################################################
-# X)	Create a Strong Authentication key and certificate request
+# Create a Strong Authentication key and certificate request
 #	RSA1024", "RSA2048", "ECCP256" default=`RSA2048'
 ##################################################################################################
-echo "Generating a private key"
-yubico-piv-tool -k $MGMT_KEY -s 9a -A RSA2048 -a generate -o key.pub
+#echo -n "What is your name?:"
+#read USER_NAME
 
-echo "Generating a Strong Authentication certificate signing request (CSR)"
-yubico-piv-tool -k $MGMT_KEY -s 9a -S '/CN=Mike Berkman/OU=test/O=cisco.com/' -P $PIN -a verify -a request-certificate -i key.pub -o request.csr
+#echo "Generating a Strong Authentication private key on the Yubikey"
+#yubico-piv-tool -k $MGMT_KEY -s 9a -A RSA2048 -a generate -o auth_key.pub
 
-
-
-##################################################################################################
-# X)	Request a Strong Authentication certificate from the CA
-#	TODO:  do we want to print out the public key?
-#	RSA1024", "RSA2048", "ECCP256" default=`RSA2048'
-##################################################################################################
-echo "Requesting a certificate from the CA"
-# Generate a self-signed certificate:
-#yubico-piv-tool -k $MGMT_KEY -s 9a -S '/CN=bar/OU=test/O=example.com/' -P $PIN -a verify -a selfsign -o certificate.cer -i key.pub
-
-# Import a certificate from stdin:
-#yubico-piv-tool -s 9a -a import-certificate -i certificate.cer
+#echo "Generating a Strong Authentication certificate signing request (CSR)"
+#yubico-piv-tool -k $MGMT_KEY -s 9a -S '/CN=${USER_NAME}/O=${USER_ORG}/' -P $PIN -a verify -a request-certificate -i auth_key.pub -o request.csr
 
 
 
 ##################################################################################################
-# X)	Import a S/MIME certificate
+# Request a Strong Authentication certificate from the CA
+##################################################################################################
+#echo "Requesting a Strong Authentication certificate from the Certificate Authority (CA)"
+# TODO:		...for now, generate a self-signed certificate:
+#yubico-piv-tool -k $MGMT_KEY -s 9a -S '/CN=${USER_NAME}/O=${USER_ORG}/' -P $PIN -a verify -a selfsign -o auth_certificate.cer -i auth_key.pub
+
+#echo "Importing the Strong Authentication certificate into the Yubikey"
+#yubico-piv-tool -k $MGMT_KEY -s 9a -a import-certificate -i auth_certificate.cer
+
+
+
+##################################################################################################
+# Import an Email certificate
 #	TODO: 
 ##################################################################################################
-# Set a random chuid, import a key and import a certificate from a PKCS12 file with password test, into slot 9c:
-#yubico-piv-tool -s 9c -i test.p12 -K PKCS12 -p P12_PASSWORD -a set-chuid -a import-key -a import-cert
+#echo "Requesting an Email certificate from the Certificate Authority (CA)"
+#TBD
+
+echo -n "What is your email certificate password?:"
+read -s EMAIL_CERTIFICATE_PASSWORD
+echo ""
+ 
+echo "Importing the Email certificate into the Yubikey"
+yubico-piv-tool -k $MGMT_KEY -s 9c -i email_certificate.pfx -K PKCS12 -p $EMAIL_CERTIFICATE_PASSWORD -a import-key
+yubico-piv-tool -k $MGMT_KEY -s 9c -i email_certificate.pfx -K PKCS12 -p $EMAIL_CERTIFICATE_PASSWORD -a import-cert
+
+
+
+##################################################################################################
+# Set the token CHUID (unique identifier)
+##################################################################################################
+yubico-piv-tool -k $MGMT_KEY -a set-chuid > /dev/null
