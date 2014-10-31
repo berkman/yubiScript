@@ -25,28 +25,28 @@ key=`dd if=/dev/random bs=1 count=24 2>/dev/null | hexdump -v -e '/1 "%02X"'`
 
 #4)	Change the token PIN and PUK
 #4a)	Generate a new PIN
-pin=`dd if=/dev/random bs=1 count=6 2>/dev/null | hexdump -v -e '/1 "%u"'|cut -c1-6`
-echo $pin
+#pin=`dd if=/dev/random bs=1 count=6 2>/dev/null | hexdump -v -e '/1 "%u"'|cut -c1-6`
+#echo $pin
+echo -n "Enter your new PIN and press [ENTER]: "
+read pin
+if [ ${#pin} -ne 6 ] ; then echo "PIN invalid (6 chars)!" ; fi
 #4b)	Generate a new PUK
-puk=`dd if=/dev/random bs=1 count=6 2>/dev/null | hexdump -v -e '/1 "%u"'|cut -c1-8`
-echo $puk
+#puk=`dd if=/dev/random bs=1 count=6 2>/dev/null | hexdump -v -e '/1 "%u"'|cut -c1-8`
+#echo $puk
+echo -n "Enter your new PUK and press [ENTER]: "
+read puk
+if [ ${#puk} -ne 8 ] ; then echo "PUK invalid (8 chars)!" ; fi
 #4c)	Set the token PIN and PUK
 #yubico-piv-tool -k $key -a change-pin -P 123456 -N $pin
 #yubico-piv-tool -k $key -a change-puk -P 12345678 -N $puk
-#	PROMPT FOR USER INPUT?
-#echo -n "Enter your new PIN and press [ENTER]: "
-#read pin
-#echo -n "Enter your new PUK and press [ENTER]: "
-#read -n 1 puk
-#echo
-# size=${#myvar}
 
-if [ ${#pin} -lt 6 ] ; then echo "PIN too short!" ; fi
-if [ ${#puk} -lt 8 ] ; then echo "PUK too short!" ; fi
 
 #To reset PIN/PUK retry counter AND codes (default pin 123456 puk 12345678):
 #yubico-piv-tool -k $key -a pin-retries --pin-retries 3 --puk-retries 3
 
+
+
+# yubico-piv-tool -k $key
 
 
 # 9A, 9C, 9D, 9E: RSA 1024, RSA 2048, or ECC secp256r1 keys (algorithms 6, 7, 11 respectively).
