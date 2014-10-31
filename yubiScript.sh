@@ -137,21 +137,22 @@ yubico-piv-tool -k $MGMT_KEY -s 9a -a import-certificate -i out/auth_certificate
 #echo "Requesting an Email certificate from the Certificate Authority (CA)"
 #TBD
 
-#echo -n "What is your email certificate password?:			"
-#read -s EMAIL_CERTIFICATE_PASSWORD
-#echo ""
+echo -n "What is your email certificate password?:			"
+read -s EMAIL_CERTIFICATE_PASSWORD
+echo ""
  
 #echo "Importing the Email certificate into the Yubikey"
 # NEEDS TO GO IN SLOT 9A???
-#yubico-piv-tool -k $MGMT_KEY -s 9a -i email_certificate.pfx -K PKCS12 -p $EMAIL_CERTIFICATE_PASSWORD -a import-key
-#yubico-piv-tool -k $MGMT_KEY -s 9c -i email_certificate.pfx -K PKCS12 -p $EMAIL_CERTIFICATE_PASSWORD -a import-cert
+yubico-piv-tool -k $MGMT_KEY -s 9c -P $PIN -i out/email_certificate.pfx -K PKCS12 -p $EMAIL_CERTIFICATE_PASSWORD -a import-key
+yubico-piv-tool -k $MGMT_KEY -s 9c -P $PIN -i out/email_certificate.pfx -K PKCS12 -p $EMAIL_CERTIFICATE_PASSWORD -a import-cert
 
 
 
 ##################################################################################################
 # Set the token CHUID (unique identifier)
 ##################################################################################################
-yubico-piv-tool -k $MGMT_KEY -a set-chuid > /dev/null
+yubico-piv-tool -k $MGMT_KEY -a set-chuid 
+# TODO:  NO OUTPUT?  > /dev/null
 
 
 
