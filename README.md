@@ -14,3 +14,9 @@ yubi-piv-tool	https://developers.yubico.com/yubico-piv-tool/
 
 yubikey-neo-manager	https://www.yubico.com/2014/04/yubikey-neo-manager-application/
 
+Yubi Slots:
+9a is for PIV Authentication
+9c is for Digital Signature (PIN always checked)
+9d is for Key Management
+9e is for Card Authentication (PIN never checked)
+
