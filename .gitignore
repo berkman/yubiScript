@@ -6,3 +6,4 @@
 *.pem
 *.p12
 *.pfx
+root/*
