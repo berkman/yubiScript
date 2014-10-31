@@ -3,6 +3,7 @@
 *.pub
 *.csr
 *.cer
+*.key
 *.pem
 *.p12
 *.pfx

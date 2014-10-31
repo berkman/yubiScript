@@ -62,13 +62,13 @@ fi
 #	TODO:  Confirmation of PIN/PUK values
 ##################################################################################################
 CHANGE_PIN="no"
-echo -n "Do you want to change your token PIN? yes/no (no):	"
+echo -n "Do you want to change your token PIN? yes/no (no):		"
 read -s CHANGE_PIN
 echo ""
 if [ "$CHANGE_PIN" == "yes" ] ; then 
 	NEW_PIN=0
 	while [ ${#NEW_PIN} -ne 6 ] ; do
-		echo -n "Enter your new PIN:	"
+		echo -n "Enter your new PIN:						"
 		read NEW_PIN
 		if [ ${#NEW_PIN} -ne 6 ] ; then echo "PIN invalid (must be 6 chars)!" ; fi
 	done
@@ -77,13 +77,13 @@ if [ "$CHANGE_PIN" == "yes" ] ; then
 fi
 
 CHANGE_PUK="no"
-echo -n "Do you want to change your token PUK? yes/no (no):	"
+echo -n "Do you want to change your token PUK? yes/no (no):		"
 read -s CHANGE_PUK
 echo ""
 if [ "$CHANGE_PUK" == "yes" ] ; then 
 	NEW_PUK=0
 	while [ ${#NEW_PUK} -ne 8 ] ; do
-		echo -n "Enter your new PUK:	"
+		echo -n "Enter your new PUK:						"
 		read NEW_PUK
 		if [ ${#NEW_PUK} -ne 8 ] ; then echo "PUK invalid (must be 8 chars)!" ; fi
 	done
@@ -100,34 +100,33 @@ fi
 # Create a Strong Authentication key and certificate request
 #	RSA1024", "RSA2048", "ECCP256" default=`RSA2048'
 ##################################################################################################
-#echo -n "What is your name?:	"
-#read USER_NAME
+echo -n "What is your name?:						"
+read USER_NAME
 
-#echo -n "What is your organization?:	"
-#read USER_ORG
+echo -n "What is your organization?:					"
+read USER_ORG
 
 # TODO:		Remove the need to write the pub key to disk
-#echo "Generating a Strong Authentication private key on the Yubikey"
-#yubico-piv-tool -k $MGMT_KEY -s 9a -A RSA2048 -P $PIN -a verify -a generate -o out/auth_public.key > /dev/null
+echo "Generating a Strong Authentication private key on the Yubikey"
+yubico-piv-tool -k $MGMT_KEY -s 9a -A RSA2048 -P $PIN -a verify -a generate -o out/auth_public.key > /dev/null
 
-#echo "Generating a Strong Authentication certificate signing request (CSR)"
-#yubico-piv-tool -k $MGMT_KEY -s 9a -S "/CN=${USER_NAME}/O=${USER_ORG}/" -P $PIN -a verify -a request-certificate -i out/auth_public.key -o out/auth_request.csr > /dev/null
+echo "Generating a Strong Authentication certificate signing request (CSR)"
+yubico-piv-tool -k $MGMT_KEY -s 9a -S "/CN=${USER_NAME}/O=${USER_ORG}/" -P $PIN -a verify -a request-certificate -i out/auth_public.key -o out/auth_request.csr > /dev/null
 
 
 
 ##################################################################################################
 # Request a Strong Authentication certificate from the CA
 ##################################################################################################
-#echo "Requesting a Strong Authentication certificate from the Certificate Authority (CA)"
+echo "Requesting a Strong Authentication certificate from the Certificate Authority (CA)"
 # TODO:		...for now, generate a self-signed certificate:
-# TODO:		Add different extensions to the CSR and sign it (example below is self signing it)
-#$ openssl
-#OpenSSL> engine dynamic -pre SO_PATH:/Library/OpenSC/lib/engines/engine_pkcs11.so -pre ID:pkcs11 -pre NO_VCHECK:1 -pre LIST_ADD:1 -pre LOAD -pre MODULE_PATH:/Library/OpenSC/lib/opensc-pkcs11.so
-#OpenSSL> x509 -req -engine pkcs11 -keyform engine -signkey slot_1-id_1 -in newreq_9A.req -out mycertificate_9A.pem -extfile pki_ext -extensions pki_ext
 #yubico-piv-tool -k $MGMT_KEY -s 9a -P $PIN -S "/CN=Self Signed Root/O=${USER_ORG}/" -a verify -a selfsign -o auth_certificate.cer -i out/auth_public.key
 
-#echo "Importing the Strong Authentication certificate into the Yubikey"
-#yubico-piv-tool -k $MGMT_KEY -s 9a -a import-certificate -i auth_certificate.cer
+# TODO:		Add different extensions to the CSR and sign it (example below is self signing it)
+openssl ca -config root/root.cfg -in out/auth_request.csr -out out/auth_certificate.cer
+
+echo "Importing the Strong Authentication certificate into the Yubikey"
+yubico-piv-tool -k $MGMT_KEY -s 9a -a import-certificate -i out/auth_certificate.cer
 
 
 
@@ -138,7 +137,7 @@ fi
 #echo "Requesting an Email certificate from the Certificate Authority (CA)"
 #TBD
 
-#echo -n "What is your email certificate password?:	"
+#echo -n "What is your email certificate password?:			"
 #read -s EMAIL_CERTIFICATE_PASSWORD
 #echo ""
  
@@ -153,3 +152,11 @@ fi
 # Set the token CHUID (unique identifier)
 ##################################################################################################
 yubico-piv-tool -k $MGMT_KEY -a set-chuid > /dev/null
+
+
+
+##################################################################################################
+# Helpful commands
+##################################################################################################
+# Clear the Mac Keychain Cache
+###	sudo rm -rf /var/db/TokenCache/tokens/
