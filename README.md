@@ -16,7 +16,7 @@ Python, PIV compatible Yubikey NEO
 ## References
 ### Yubi Slots: 
 
-9a is for PIV Authentication  
-9c is for Digital Signature (PIN always checked)  
-9d is for Key Management  
-9e is for Card Authentication (PIN never checked)
+9a: PIV Authentication  
+9c: Digital Signature (PIN always checked)  
+9d: Key Management  
+9e: Card Authentication (PIN never checked)
