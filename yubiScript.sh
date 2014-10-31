@@ -1,4 +1,6 @@
 #!/bin/bash
+# TODO:		Output all user settings to a file
+# TODO:		Better notifications of what is happening
 
 
 ##################################################################################################
@@ -58,6 +60,7 @@ if [ "$CHANGE_PIN" == "yes" ] ; then
 		if [ ${#NEW_PIN} -ne 6 ] ; then echo "PIN invalid (must be 6 chars)!" ; fi
 	done
 	yubico-piv-tool -k $MGMT_KEY -a change-pin -P $PIN -N $NEW_PIN
+	PIN=$NEW_PIN
 fi
 
 CHANGE_PUK="no"
@@ -71,50 +74,43 @@ if [ "$CHANGE_PUK" == "yes" ] ; then
 		if [ ${#NEW_PUK} -ne 8 ] ; then echo "PUK invalid (must be 8 chars)!" ; fi
 	done
 	yubico-piv-tool -k $MGMT_KEY -a change-puk -P $PUK -N $NEW_PUK
+	PUK=$NEW_PUK
 fi
 
-# TODO:		LOCKED OUT
-#To reset PIN/PUK retry counter AND codes (default pin 123456 puk 12345678):
+# TODO:		Reset PIN/PUK to defaults (123456/12345678)
 #yubico-piv-tool -k $key -a pin-retries --pin-retries 3 --puk-retries 3
 
 
 
-
 ##################################################################################################
-# X)	Create an Authentication certificate
-#	TODO:  
+# X)	Create a Strong Authentication key and certificate request
 #	RSA1024", "RSA2048", "ECCP256" default=`RSA2048'
 ##################################################################################################
+echo "Generating a private key"
+yubico-piv-tool -k $MGMT_KEY -s 9a -A RSA2048 -a generate -o key.pub
 
-# Generate the private key
-yubico-piv-tool -k $MGMT_KEY -s 9a -A RSA2048 -a generate
-
-
-
-
-
-#       Generate a certificate request with public key from stdin, will print the resulting request on stdout:
-#          yubico-piv-tool -s 9a -S '/CN=foo/OU=test/O=example.com/' -P 123456 \
-#            -a verify -a request
-
-#       Generate a self-signed certificate with public key from stdin, will print the certificate, for later import, on stdout:
-#          yubico-piv-tool -s 9a -S '/CN=bar/OU=test/O=example.com/' -P 123456 \
-#            -a verify -a selfsign
-
-#       Import a certificate from stdin:
-#          yubico-piv-tool -s 9a -a import-certificate
-
-#       Set a random chuid, import a key and import a certificate from a PKCS12 file with password test, into slot 9c:
-#          yubico-piv-tool -s 9c -i test.pfx -K PKCS12 -p test -a set-chuid \
-#            -a import-key -a import-cert
-
-#       Delete a certificate in slot 9a:
-#         yubico-piv-tool -a delete-certificate -s 9a
+echo "Generating a Strong Authentication certificate signing request (CSR)"
+yubico-piv-tool -k $MGMT_KEY -s 9a -S '/CN=Mike Berkman/OU=test/O=cisco.com/' -P $PIN -a verify -a request-certificate -i key.pub -o request.csr
 
 
-#################################################
-# X)	Change the token CHUID
-#	TODO:	all of it...
-#################################################
-# piv-tool -A M:9B:03 -s '00 db 3f ff 41 5c 03 5f c1 02 53 3c 30 19 d4 e7 39 ff 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 34 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff 35 08 32 30 31 34 30 31 30 31 3e 00 fe'
-# * 16 bytes, "11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff" above
+
+##################################################################################################
+# X)	Request a Strong Authentication certificate from the CA
+#	TODO:  do we want to print out the public key?
+#	RSA1024", "RSA2048", "ECCP256" default=`RSA2048'
+##################################################################################################
+echo "Requesting a certificate from the CA"
+# Generate a self-signed certificate:
+#yubico-piv-tool -k $MGMT_KEY -s 9a -S '/CN=bar/OU=test/O=example.com/' -P $PIN -a verify -a selfsign -o certificate.cer -i key.pub
+
+# Import a certificate from stdin:
+#yubico-piv-tool -s 9a -a import-certificate -i certificate.cer
+
+
+
+##################################################################################################
+# X)	Import a S/MIME certificate
+#	TODO: 
+##################################################################################################
+# Set a random chuid, import a key and import a certificate from a PKCS12 file with password test, into slot 9c:
+#yubico-piv-tool -s 9c -i test.p12 -K PKCS12 -p P12_PASSWORD -a set-chuid -a import-key -a import-cert
