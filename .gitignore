@@ -1,0 +1,10 @@
+.DS_Store
+*.swp
+*.pub
+*.csr
+*.cer
+*.key
+*.pem
+*.p12
+*.pfx
+root/*

@@ -1,0 +1,12 @@
+prefix=/Users/klas/yubico-piv-tool/tmp/root
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: yubico-piv-tool
+Description: Yubico PIV C Library
+URL: https://www.yubico.com/
+Version: 0.1.0
+Libs: -L${libdir} -lykpiv
+Cflags: -I${includedir}/ykpiv
+
