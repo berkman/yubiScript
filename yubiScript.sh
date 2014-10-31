@@ -1,6 +1,5 @@
-#!/bin/sh
+#!/bin/bash
 
-path_to_executable=$(which name_of_executable)
- if [ -x "$path_to_executable" ] ; then
-    echo "It's here: $path_to_executable"
- fi
+#  References:  http://stackoverflow.com/questions/592620/how-to-check-if-a-program-exists-from-a-bash-script/677212#677212
+
+hash yubico-piv-tool 2>/dev/null || { echo >&2 "I require yubico-piv-tool but it's not installed.  Aborting."; exit 1; }
