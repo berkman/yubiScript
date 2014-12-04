@@ -31,12 +31,22 @@ hash openssl 2>/dev/null || { echo >&2 "I require openssl but it's not installed
 hash yubico-piv-tool 2>/dev/null || { echo >&2 "I require yubico-piv-tool but it's not installed.  Aborting."; exit 1; }
 
 
+
 ##################################################################################################
 # TODO:		Change the Yubikey NEO to support tokens (CCID mode)
 ##################################################################################################
 #ykinfo -v
 ## Enable the NEO’s Smartcard interface (OTP+CCID)
 # ykpersonalize -m82
+
+
+
+##################################################################################################
+# Prompt the user for their PIN
+##################################################################################################
+echo -n "Enter your existing PIN:						"
+read -s PIN
+if [ ${#PIN} -ne 6 ] ; then echo "PIN invalid (must be 6 chars)!" ; fi
 
 
 
@@ -63,13 +73,13 @@ fi
 ##################################################################################################
 CHANGE_PIN="no"
 echo -n "Do you want to change your token PIN? yes/no (no):		"
-read -s CHANGE_PIN
+read CHANGE_PIN
 echo ""
 if [ "$CHANGE_PIN" == "yes" ] ; then 
 	NEW_PIN=0
 	while [ ${#NEW_PIN} -ne 6 ] ; do
 		echo -n "Enter your new PIN:						"
-		read NEW_PIN
+		read -s NEW_PIN
 		if [ ${#NEW_PIN} -ne 6 ] ; then echo "PIN invalid (must be 6 chars)!" ; fi
 	done
 	yubico-piv-tool -k $MGMT_KEY -a change-pin -P $PIN -N $NEW_PIN
@@ -78,13 +88,13 @@ fi
 
 CHANGE_PUK="no"
 echo -n "Do you want to change your token PUK? yes/no (no):		"
-read -s CHANGE_PUK
+read CHANGE_PUK
 echo ""
 if [ "$CHANGE_PUK" == "yes" ] ; then 
 	NEW_PUK=0
 	while [ ${#NEW_PUK} -ne 8 ] ; do
 		echo -n "Enter your new PUK:						"
-		read NEW_PUK
+		read -s NEW_PUK
 		if [ ${#NEW_PUK} -ne 8 ] ; then echo "PUK invalid (must be 8 chars)!" ; fi
 	done
 	yubico-piv-tool -k $MGMT_KEY -a change-puk -P $PUK -N $NEW_PUK
@@ -118,15 +128,15 @@ yubico-piv-tool -k $MGMT_KEY -s 9a -S "/CN=${USER_NAME}/O=${USER_ORG}/" -P $PIN 
 ##################################################################################################
 # Request a Strong Authentication certificate from the CA
 ##################################################################################################
-echo "Requesting a Strong Authentication certificate from the Certificate Authority (CA)"
+#echo "Requesting a Strong Authentication certificate from the Certificate Authority (CA)"
 # TODO:		...for now, generate a self-signed certificate:
-#yubico-piv-tool -k $MGMT_KEY -s 9a -P $PIN -S "/CN=Self Signed Root/O=${USER_ORG}/" -a verify -a selfsign -o auth_certificate.cer -i out/auth_public.key
+yubico-piv-tool -k $MGMT_KEY -s 9a -P $PIN -S "/CN=Self Signed Root/O=${USER_ORG}/" -a verify -a selfsign -o auth_certificate.cer -i out/auth_public.key
 
 # TODO:		Add different extensions to the CSR and sign it (example below is self signing it)
-openssl ca -config root/root.cfg -in out/auth_request.csr -out out/auth_certificate.cer
+#openssl ca -config root/root.cfg -in out/auth_request.csr -out out/auth_certificate.cer
 
-echo "Importing the Strong Authentication certificate into the Yubikey"
-yubico-piv-tool -k $MGMT_KEY -s 9a -a import-certificate -i out/auth_certificate.cer
+#echo "Importing the Strong Authentication certificate into the Yubikey"
+#yubico-piv-tool -k $MGMT_KEY -s 9a -a import-certificate -i out/auth_certificate.cer
 
 
 
@@ -137,14 +147,14 @@ yubico-piv-tool -k $MGMT_KEY -s 9a -a import-certificate -i out/auth_certificate
 #echo "Requesting an Email certificate from the Certificate Authority (CA)"
 #TBD
 
-echo -n "What is your email certificate password?:			"
-read -s EMAIL_CERTIFICATE_PASSWORD
-echo ""
+#echo -n "What is your email certificate password?:			"
+#read -s EMAIL_CERTIFICATE_PASSWORD
+#echo ""
  
 #echo "Importing the Email certificate into the Yubikey"
 # NEEDS TO GO IN SLOT 9A???
-yubico-piv-tool -k $MGMT_KEY -s 9c -P $PIN -i out/email_certificate.pfx -K PKCS12 -p $EMAIL_CERTIFICATE_PASSWORD -a import-key
-yubico-piv-tool -k $MGMT_KEY -s 9c -P $PIN -i out/email_certificate.pfx -K PKCS12 -p $EMAIL_CERTIFICATE_PASSWORD -a import-cert
+#yubico-piv-tool -k $MGMT_KEY -s 9c -P $PIN -i out/email_certificate.pfx -K PKCS12 -p $EMAIL_CERTIFICATE_PASSWORD -a import-key
+#yubico-piv-tool -k $MGMT_KEY -s 9c -P $PIN -i out/email_certificate.pfx -K PKCS12 -p $EMAIL_CERTIFICATE_PASSWORD -a import-cert
 
 
 
